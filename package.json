@@ -1,0 +1,19 @@
+{
+  "name": "online-grocery-agile",
+  "version": "1.0.0",
+  "description": "Online Grocery Application - Complete Agile Development for MIT Final Jury",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/test-runner.js"
+  },
+  "keywords": [
+    "agile",
+    "grocery",
+    "mit-jury",
+    "scrum",
+    "tracking"
+  ],
+  "author": "Radhika Prasad, Akhilesh Patil, Arjun Deshmukh, Sagar Singh, Rinkesh Anap",
+  "license": "ISC"
+}

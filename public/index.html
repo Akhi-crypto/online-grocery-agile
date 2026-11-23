@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickGrocery | Agile E-Commerce Platform</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Leaflet CSS & JS for Interactive Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/styles.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            },
+            agile: {
+              jira: '#0052cc',
+              sprint: '#ffab00',
+              done: '#36b37e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ======================================================== -->
+  <!-- TOP JURY COMPLIANCE & QUICK DEMO BANNER                  -->
+  <!-- ======================================================== -->
+  <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white text-xs px-4 py-2.5 border-b border-indigo-800/40 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> MIT Jury 2026 Ready
+        </span>
+        <span class="text-slate-300 hidden md:inline">Problem Statement 8: Online Grocery Application (Agile Delivery)</span>
+        <span class="text-slate-400 hidden lg:inline">| Velocity: 16 pts/Sprint | 47 SP Delivered</span>
+      </div>
+      <div class="flex items-center gap-2 overflow-x-auto py-1">
+        <button onclick="triggerDemo('TC-01')" class="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/30 transition flex items-center gap-1">
+          🥑 TC-01 Stock Concurrency
+        </button>
+        <button onclick="triggerDemo('TC-05')" class="px-2.5 py-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition flex items-center gap-1">
+          🚫 TC-05 Excess Qty
+        </button>
+        <button onclick="triggerDemo('BUG-104')" class="px-2.5 py-1 rounded bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 border border-purple-500/30 transition flex items-center gap-1">
+          ⚡ BUG-104 Saga Rollback
+        </button>
+        <button onclick="openAgileModal('tests')" class="px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1 font-bold">
+          🧪 Run 8 Test Cases
+        </button>
+        <button onclick="resetSystemState()" title="Reset Inventory & Orders" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+          🔄 Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MAIN NAVIGATION HEADER                                   -->
+  <!-- ======================================================== -->
+  <header class="glass-nav border-b border-slate-200 sticky top-10 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo & Mission -->
+      <div class="flex items-center gap-3">
+        <a href="#" onclick="showStorefront(); return false;" class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white text-xl shadow-md shadow-brand-500/20 font-black">
+            🥬
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-xl tracking-tight text-slate-900">Quick<span class="text-brand-600">Grocery</span></span>
+              <span class="text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-800 px-1.5 py-0.5 rounded">30-MIN</span>
+            </div>
+            <p class="text-[11px] text-slate-500 font-medium">Sub-30 Minute Agile Fulfillment</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Geofenced Delivery Hub Selector -->
+      <div class="hidden md:flex items-center gap-2 bg-slate-100/80 hover:bg-slate-200/60 px-3 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-700 transition cursor-pointer" onclick="openLocationPicker()">
+        <span class="text-rose-500">📍</span>
+        <div>
+          <div class="font-semibold text-slate-900" id="currentLocationLabel">Pune (MIT Campus / 411038)</div>
+          <div class="text-[10px] text-slate-500">Dark Store #4 • Express Delivery in 24m</div>
+        </div>
+        <span class="text-slate-400 text-[10px]">▼</span>
+      </div>
+
+      <!-- Instant Search Bar (US-01 SLA: < 150ms) -->
+      <div class="flex-1 max-w-md relative">
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            🔍
+          </span>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search groceries (e.g., mango, milk, avocado, vegan)..." 
+            class="w-full pl-9 pr-12 py-2 text-sm bg-slate-100/90 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+            oninput="handleSearch(this.value)"
+          >
+          <span id="searchLatencyBadge" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[10px] text-slate-400 font-mono-code">
+            &lt;150ms
+          </span>
+        </div>
+      </div>
+
+      <!-- Header Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button onclick="openAgileModal('jira')" class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+          <span>📋</span> <span class="hidden sm:inline">Jira Sprint Board</span>
+        </button>
+
+        <button onclick="openAgileModal('metrics')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
+          <span>📊</span> <span class="hidden lg:inline">Agile Artifacts</span>
+        </button>
+
+        <button onclick="toggleCartDrawer()" class="relative px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center gap-2 transition shadow-md shadow-brand-600/20">
+          <span>🛒</span>
+          <span class="hidden sm:inline">Cart</span>
+          <span id="cartCountBadge" class="bg-white text-brand-700 rounded-full w-5 h-5 flex items-center justify-center text-[11px] font-black">0</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ======================================================== -->
+  <!-- MAIN CONTENT CONTAINER                                   -->
+  <!-- ======================================================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
+
+    <!-- Storefront View -->
+    <div id="storefrontView">
+      
+      <!-- Agile Mission Banner -->
+      <div class="bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white mb-8 relative overflow-hidden shadow-xl border border-emerald-700/30">
+        <div class="relative z-10 max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-200 text-xs font-semibold mb-3 backdrop-blur-sm border border-white/10">
+            <span>⚡ Target Mission</span> • <span>Sub-30 Minute Hyper-Local Fulfillment</span>
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">
+            Fresh Groceries Delivered in 30 Mins.
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base mb-4 leading-relaxed">
+            Engineered through 3 Agile Sprints with Redis-style stock hold, idempotent checkout, multi-gateway payments, and live GPS rider tracking.
+          </p>
+          <div class="flex flex-wrap items-center gap-3 text-xs text-emerald-200">
+            <span class="flex items-center gap-1 bg-black/20 px-2.5 py-1 rounded-lg">✔ 6 User Stories</span>
+            <span class="flex items-center gap-1 bg-black/20 px-2.5 py-1 rounded-lg">✔ 47 Story Points</span>
+            <span class="flex items-center gap-1 bg-black/20 px-2.5 py-1 rounded-lg">✔ 100% Sprint Predictability</span>
+            <span class="flex items-center gap-1 bg-black/20 px-2.5 py-1 rounded-lg">✔ &gt;85% Test Coverage</span>
+          </div>
+        </div>
+        <div class="absolute -right-8 -bottom-10 text-9xl opacity-20 select-none pointer-events-none">
+          🥦
+        </div>
+      </div>
+
+      <!-- Categories & Filter Toolbar (US-01) -->
+      <div class="mb-6 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <span>Shop by Category</span>
+            <span class="text-xs font-normal text-slate-500">(US-01 Core Discovery)</span>
+          </h2>
+          <span id="searchResultStats" class="text-xs text-slate-500 font-medium">Loading products...</span>
+        </div>
+
+        <!-- Category Pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2" id="categoryPillContainer">
+          <!-- Filled dynamically by JS -->
+        </div>
+
+        <!-- Dietary Tag Pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider pl-1">Dietary:</span>
+          <button onclick="setDietaryFilter('All')" class="dietary-pill px-2.5 py-1 rounded-lg border text-slate-700 bg-white hover:bg-slate-50 border-slate-200 transition active-dietary" data-dietary="All">All</button>
+          <button onclick="setDietaryFilter('Organic')" class="dietary-pill px-2.5 py-1 rounded-lg border text-slate-700 bg-white hover:bg-slate-50 border-slate-200 transition" data-dietary="Organic">🌱 Organic</button>
+          <button onclick="setDietaryFilter('Vegan')" class="dietary-pill px-2.5 py-1 rounded-lg border text-slate-700 bg-white hover:bg-slate-50 border-slate-200 transition" data-dietary="Vegan">🥑 Vegan</button>
+          <button onclick="setDietaryFilter('Keto')" class="dietary-pill px-2.5 py-1 rounded-lg border text-slate-700 bg-white hover:bg-slate-50 border-slate-200 transition" data-dietary="Keto">🥩 Keto</button>
+          <button onclick="setDietaryFilter('Gluten-Free')" class="dietary-pill px-2.5 py-1 rounded-lg border text-slate-700 bg-white hover:bg-slate-50 border-slate-200 transition" data-dietary="Gluten-Free">🌾 Gluten-Free</button>
+        </div>
+      </div>
+
+      <!-- Product Catalogue Grid (US-01) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5" id="productGrid">
+        <!-- Filled dynamically by JS -->
+      </div>
+
+    </div>
+
+    <!-- Live Order & Delivery Tracking View (US-05 & US-06) -->
+    <div id="trackingView" class="hidden">
+      <!-- Injected dynamically by tracking.js -->
+    </div>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- SLIDING CART DRAWER (US-02 Smart Cart)                   -->
+  <!-- ======================================================== -->
+  <div id="cartDrawerBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden transition-opacity" onclick="toggleCartDrawer()"></div>
+  <aside id="cartDrawer" class="fixed top-0 right-0 w-full sm:w-[440px] h-full bg-white shadow-2xl z-50 flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
+    
+    <!-- Drawer Header -->
+    <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+      <div>
+        <h3 class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+          <span>🛒 My Grocery Cart</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">US-02</span>
+        </h3>
+        <p class="text-[11px] text-slate-500">Real-time stock hold & quantity verification</p>
+      </div>
+      <button onclick="toggleCartDrawer()" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center text-sm font-bold transition">
+        ✕
+      </button>
+    </div>
+
+    <!-- 15-Minute Redis Inventory Hold Banner (Slide 4 US-02) -->
+    <div class="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between text-xs text-amber-900">
+      <div class="flex items-center gap-2">
+        <span class="text-base animate-pulse">⏰</span>
+        <div>
+          <span class="font-bold">15-Min Stock Hold Active:</span>
+          <span id="reservationTimer" class="font-mono-code font-bold text-amber-700 ml-1">15:00</span>
+        </div>
+      </div>
+      <button onclick="releaseCartStock()" title="Simulate Session Abandonment (TC-04)" class="text-[10px] underline text-amber-800 hover:text-amber-950">
+        Release Hold
+      </button>
+    </div>
+
+    <!-- Cart Item List -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cartItemList">
+      <!-- Injected dynamically -->
+    </div>
+
+    <!-- Promo Code Section -->
+    <div class="px-4 py-3 bg-slate-50 border-t border-slate-200">
+      <div class="flex items-center gap-2">
+        <input 
+          type="text" 
+          id="couponInput" 
+          placeholder="Enter coupon (e.g. AGILE20 or SUB30)" 
+          class="flex-1 px-3 py-1.5 text-xs uppercase bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 font-mono-code"
+        >
+        <button onclick="applyCoupon()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold transition">
+          Apply
+        </button>
+      </div>
+      <div id="couponStatusMessage" class="text-[11px] mt-1 font-medium hidden"></div>
+    </div>
+
+    <!-- Bill Details & Checkout CTA -->
+    <div class="p-4 border-t border-slate-200 bg-white space-y-2">
+      <div class="text-xs space-y-1.5 text-slate-600">
+        <div class="flex justify-between">
+          <span>Items Subtotal</span>
+          <span id="billSubtotal" class="font-semibold text-slate-900">₹0</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Delivery Fee (Free above ₹499)</span>
+          <span id="billDeliveryFee" class="font-semibold text-slate-900">₹0</span>
+        </div>
+        <div class="flex justify-between">
+          <span>GST / Packaging (5%)</span>
+          <span id="billGst" class="font-semibold text-slate-900">₹0</span>
+        </div>
+        <div id="billDiscountRow" class="flex justify-between text-emerald-600 hidden">
+          <span>Sprint Discount</span>
+          <span id="billDiscount" class="font-semibold">-₹0</span>
+        </div>
+        <div class="border-t border-slate-200 pt-1.5 flex justify-between text-sm font-extrabold text-slate-900">
+          <span>Grand Total</span>
+          <span id="billGrandTotal" class="text-base text-brand-600 font-black">₹0</span>
+        </div>
+      </div>
+
+      <button 
+        id="proceedCheckoutBtn" 
+        onclick="openCheckoutModal()" 
+        disabled
+        class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-extrabold text-sm shadow-lg shadow-brand-600/25 flex items-center justify-center gap-2 transition"
+      >
+        <span>Proceed to Checkout</span>
+        <span>→</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ======================================================== -->
+  <!-- CHECKOUT & PAYMENT MODAL (US-03 & US-04)                 -->
+  <!-- ======================================================== -->
+  <div id="checkoutModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden border border-slate-200 my-8">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg font-bold">Secure Express Checkout</h3>
+            <span class="text-xs bg-brand-500/20 text-brand-300 border border-brand-500/30 px-2 py-0.5 rounded">US-03 & US-04</span>
+          </div>
+          <p class="text-xs text-slate-400">Target: Sub-30 Minute Delivery Slot Verification</p>
+        </div>
+        <button onclick="closeCheckoutModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-300 transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Checkout Form Content -->
+      <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+        
+        <!-- Step 1: Customer Details -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-[10px]">1</span>
+            Customer Information
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+              <input type="text" id="custName" value="Radhika Prasad" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 font-medium">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Mobile Number (SMS Alerts)</label>
+              <input type="text" id="custPhone" value="+91 98200 40110" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 font-medium">
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Address & Geofencing (US-03 BDD Acceptance Criteria) -->
+        <div class="space-y-3 border-t border-slate-100 pt-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-[10px]">2</span>
+              Delivery Address & Geofencing (SLA: &lt;200ms)
+            </h4>
+            <span id="zipStatusBadge" class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              ✔ Serviceable Hub
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Street Address</label>
+              <input type="text" id="custStreet" value="Flat 402, Green Valley Towers, Paud Road" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Pincode / Zip Code</label>
+              <input 
+                type="text" 
+                id="custZip" 
+                value="411038" 
+                class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 font-mono-code font-bold"
+                oninput="verifyZipServiceability(this.value)"
+              >
+            </div>
+          </div>
+          <div id="zipErrorMessage" class="text-xs text-rose-600 font-semibold hidden"></div>
+          <p class="text-[11px] text-slate-500">
+            Serviceable Pincodes: <code class="bg-slate-100 px-1 rounded text-slate-700">411038 (MIT Pune)</code>, <code class="bg-slate-100 px-1 rounded text-slate-700">411001</code>, <code class="bg-slate-100 px-1 rounded text-slate-700">411014</code>, <code class="bg-slate-100 px-1 rounded text-slate-700">411057</code>, <code class="bg-slate-100 px-1 rounded text-slate-700">10001 (NY)</code>
+          </p>
+        </div>
+
+        <!-- Step 3: 30-Min Delivery Slot Allocator (US-03) -->
+        <div class="space-y-3 border-t border-slate-100 pt-4">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-[10px]">3</span>
+            Choose Delivery Slot (Sub-30 Min SLA)
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <label class="border-2 border-brand-500 bg-brand-50/50 p-3 rounded-xl cursor-pointer flex flex-col justify-between slot-card transition">
+              <input type="radio" name="deliverySlot" value="30-Minute Instant Express" checked class="hidden" onchange="updateSlotSelection(this)">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-extrabold text-brand-900">⚡ 30-Min Instant</span>
+                <span class="w-3.5 h-3.5 rounded-full bg-brand-600 flex items-center justify-center text-white text-[9px]">✓</span>
+              </div>
+              <p class="text-[11px] text-brand-700">Arrives in ~24 mins</p>
+            </label>
+
+            <label class="border-2 border-slate-200 hover:border-slate-300 p-3 rounded-xl cursor-pointer flex flex-col justify-between slot-card transition">
+              <input type="radio" name="deliverySlot" value="Evening (5:00 PM - 7:00 PM)" class="hidden" onchange="updateSlotSelection(this)">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-slate-700">🌆 Evening Slot</span>
+                <span class="w-3.5 h-3.5 rounded-full border border-slate-300 slot-check"></span>
+              </div>
+              <p class="text-[11px] text-slate-500">5:00 PM - 7:00 PM</p>
+            </label>
+
+            <label class="border-2 border-slate-200 hover:border-slate-300 p-3 rounded-xl cursor-pointer flex flex-col justify-between slot-card transition">
+              <input type="radio" name="deliverySlot" value="Morning Tomorrow (8:00 AM - 10:00 AM)" class="hidden" onchange="updateSlotSelection(this)">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-slate-700">☀️ Morning Slot</span>
+                <span class="w-3.5 h-3.5 rounded-full border border-slate-300 slot-check"></span>
+              </div>
+              <p class="text-[11px] text-slate-500">Tomorrow 8-10 AM</p>
+            </label>
+          </div>
+        </div>
+
+        <!-- Step 4: Multi-Gateway Payment Sandbox (US-04) -->
+        <div class="space-y-3 border-t border-slate-100 pt-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-[10px]">4</span>
+              Payment Sandbox & 3D Secure Gateway (US-04)
+            </h4>
+            <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+              [SIMULATION LAB]
+            </span>
+          </div>
+
+          <!-- Payment Tabs -->
+          <div class="flex border-b border-slate-200 text-xs">
+            <button onclick="setPaymentMethod('upi')" class="pay-tab py-2 px-4 border-b-2 font-bold text-brand-600 border-brand-600" data-pay="upi">
+              📱 UPI / QR Code
+            </button>
+            <button onclick="setPaymentMethod('card')" class="pay-tab py-2 px-4 border-b-2 font-medium text-slate-500 border-transparent hover:text-slate-800" data-pay="card">
+              💳 Card (3D Secure)
+            </button>
+            <button onclick="setPaymentMethod('wallet')" class="pay-tab py-2 px-4 border-b-2 font-medium text-slate-500 border-transparent hover:text-slate-800" data-pay="wallet">
+              👛 Wallet
+            </button>
+            <button onclick="setPaymentMethod('cod')" class="pay-tab py-2 px-4 border-b-2 font-medium text-slate-500 border-transparent hover:text-slate-800" data-pay="cod">
+              💵 Cash on Delivery
+            </button>
+          </div>
+
+          <!-- UPI Panel -->
+          <div id="payPanelUpi" class="space-y-3 pt-2">
+            <div class="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div class="w-28 h-28 rounded-lg bg-white border border-slate-300 p-2 flex flex-col items-center justify-center text-center shadow-sm">
+                <div class="w-20 h-20 qr-pattern rounded flex items-center justify-center text-2xl font-black text-slate-900">
+                  📱
+                </div>
+                <span class="text-[9px] font-mono-code text-slate-500 mt-1">Scan via UPI App</span>
+              </div>
+              <div class="flex-1 space-y-1.5 text-xs">
+                <span class="font-bold text-slate-800">Direct UPI ID / VPA</span>
+                <div class="flex gap-2">
+                  <input type="text" id="upiVpaInput" value="radhika.mit@okhdfcbank" class="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-mono-code text-xs">
+                </div>
+                <p class="text-[11px] text-slate-500">Supports Google Pay, PhonePe, Paytm, and BHIM UPI with instant confirmation.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Panel -->
+          <div id="payPanelCard" class="space-y-3 pt-2 hidden">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Card Number (PCI-DSS Sandbox)</label>
+                <input type="text" value="4532 •••• •••• 8821" readonly class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono-code">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Expiry Date</label>
+                  <input type="text" value="09/28" readonly class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono-code">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">CVV / CVC</label>
+                  <input type="password" value="•••" readonly class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono-code">
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500 flex items-center gap-1">
+                🔒 256-bit SSL encrypted • 3D Secure bank OTP challenge will trigger
+              </p>
+            </div>
+          </div>
+
+          <!-- Wallet Panel -->
+          <div id="payPanelWallet" class="space-y-3 pt-2 hidden">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">👛</span>
+                <div>
+                  <span class="font-bold text-slate-800">QuickGrocery One-Click Wallet</span>
+                  <div class="text-[11px] text-slate-500">Available Balance: ₹1,500.00</div>
+                </div>
+              </div>
+              <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Sufficient Balance</span>
+            </div>
+          </div>
+
+          <!-- COD Panel -->
+          <div id="payPanelCod" class="space-y-3 pt-2 hidden">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
+              <p class="font-bold text-slate-800">Cash on Delivery (Hyper-local)</p>
+              <p class="text-[11px]">Pay via cash or UPI QR to delivery partner at doorstep.</p>
+            </div>
+          </div>
+
+          <!-- JURY DEMONSTRATION CONTROL ACTIONS -->
+          <div class="bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold text-indigo-950 flex items-center gap-1.5">
+                <span>🎯</span> Jury Demo Action Triggers:
+              </span>
+              <span class="text-[10px] text-indigo-700 font-mono-code">Select scenario to demonstrate</span>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button 
+                onclick="executePaymentSimulation('success')" 
+                class="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+              >
+                <span>✔</span> <span>Pay & Dispatch (Happy Path)</span>
+              </button>
+
+              <button 
+                onclick="executePaymentSimulation('failure')" 
+                class="w-full py-2.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                title="Tests BUG-104 Fix: Stock rollback when payment aborted"
+              >
+                <span>✖</span> <span>Abort Payment (BUG-104 Test)</span>
+              </button>
+
+              <button 
+                onclick="executePaymentSimulation('timeout')" 
+                class="w-full py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                title="Tests TC-02: Bank OTP timeout & auto-cancel"
+              >
+                <span>⏱</span> <span>Simulate Timeout (TC-02)</span>
+              </button>
+
+              <button 
+                onclick="executePaymentSimulation('webhook_delay')" 
+                class="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                title="Tests TC-03: Webhook drop with client fallback poll"
+              >
+                <span>⚡</span> <span>Webhook Drop 60s (TC-03)</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- AGILE GOVERNANCE & JURY HUB MODAL                        -->
+  <!-- ======================================================== -->
+  <div id="agileModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden border border-slate-200 my-6 flex flex-col max-h-[90vh]">
+      
+      <!-- Agile Hub Header -->
+      <div class="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🏆</span>
+            <h3 class="text-lg font-extrabold tracking-tight">Agile Software Development Governance Hub</h3>
+          </div>
+          <p class="text-xs text-slate-400">Department of Computer Science & Engineering | MIT School of Computing</p>
+        </div>
+        <button onclick="closeAgileModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-300 transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Agile Navigation Tabs -->
+      <div class="flex border-b border-slate-200 bg-slate-50 text-xs overflow-x-auto px-4">
+        <button onclick="switchAgileTab('jira')" class="agile-tab py-3 px-4 font-bold border-b-2 text-indigo-600 border-indigo-600 flex items-center gap-1.5" data-tab="jira">
+          <span>📋</span> Jira Sprint Board (Slide 6)
+        </button>
+        <button onclick="switchAgileTab('tests')" class="agile-tab py-3 px-4 font-semibold border-b-2 text-slate-500 border-transparent hover:text-slate-800 flex items-center gap-1.5" data-tab="tests">
+          <span>🧪</span> Automated Test Suite (Slide 9)
+        </button>
+        <button onclick="switchAgileTab('stories')" class="agile-tab py-3 px-4 font-semibold border-b-2 text-slate-500 border-transparent hover:text-slate-800 flex items-center gap-1.5" data-tab="stories">
+          <span>📝</span> 6 User Stories & BDD (Slide 3 & 8)
+        </button>
+        <button onclick="switchAgileTab('metrics')" class="agile-tab py-3 px-4 font-semibold border-b-2 text-slate-500 border-transparent hover:text-slate-800 flex items-center gap-1.5" data-tab="metrics">
+          <span>📊</span> Velocity & Metrics (Slide 7)
+        </button>
+        <button onclick="switchAgileTab('defects')" class="agile-tab py-3 px-4 font-semibold border-b-2 text-slate-500 border-transparent hover:text-slate-800 flex items-center gap-1.5" data-tab="defects">
+          <span>🐛</span> Defect Log & BUG-104 (Slide 10)
+        </button>
+        <button onclick="switchAgileTab('team')" class="agile-tab py-3 px-4 font-semibold border-b-2 text-slate-500 border-transparent hover:text-slate-800 flex items-center gap-1.5" data-tab="team">
+          <span>👥</span> Team Contributions (Slide 1)
+        </button>
+      </div>
+
+      <!-- Agile Tab Contents -->
+      <div class="flex-1 overflow-y-auto p-6" id="agileContentContainer">
+        <!-- Injected dynamically by agile.js -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- TOAST NOTIFICATION CONTAINER                             -->
+  <!-- ======================================================== -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Scripts -->
+  <script src="/js/app.js"></script>
+  <script src="/js/checkout.js"></script>
+  <script src="/js/tracking.js"></script>
+  <script src="/js/agile.js"></script>
+  <script src="/js/tests.js"></script>
+</body>
+</html>
